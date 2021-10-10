@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/css/materialize.min.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <title>Shortcut</title>
+</head>
+<body>
+    <div class="row">
+        <div>
+            <h4>Shortcut - connected to <span id="host-ip"></span></h4>
+        </div>
+    </div>
+    <div class="row" id="upload-progressbar">
+        <div class="progress">
+            <div id="progress-completed" class="determinate" style="width: 0%"></div>
+        </div>
+        <div>
+            Uploading <span id="uploading-filename"></span>
+        </div>
+    </div>   
+    
+    <main>
+        <div class="row">
+            <div>
+                <p><strong>Device Name:</strong> <span id="self-device-name"></span></p>
+                <input id="file-input" type="file" name="name" style="display: none;" />
+                <a id="file-picker-btn" class="waves-effect waves-light btn"><i class="material-icons left">attach_file</i>Select files to upload</a>
+                <a id="refresh-btn" class="waves-effect waves-light btn"><i class="material-icons left">refresh</i>Reload</a>
+            </div>
+        </div>
+        <div id="main-area">
+            <table id="file-table">
+            </table>
+        </div>
+        
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/scripts/util.js"></script>
+    <script src="/scripts/main.js"></script>
+</body>
+</html>

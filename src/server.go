@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -18,15 +19,23 @@ type meta struct {
 	Url string
 }
 
+type clipboardItem struct {
+	DeviceName string
+	Content    string
+}
+
 type handler struct {
-	server   http.Server
-	fileList []FileList
+	server         http.Server
+	fileList       []FileList
+	clipboardItems []clipboardItem
 }
 
 func (h *handler) handleRequests(port string) {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/meta", h.sendMeta)
 	router.Path("/upload").Methods("POST").HandlerFunc(h.handleFile)
+	router.Path("/clipboard").Methods("POST").HandlerFunc(h.handleClipboardItem)
+	router.Path("/clipboard").Methods("GET").HandlerFunc(h.getClipboardItems)
 	router.HandleFunc("/files", h.getFiles)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 
@@ -74,6 +83,25 @@ func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 		Log("error", err.Error())
 	}
 	h.getFiles(w, r)
+}
+
+func (h *handler) handleClipboardItem(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	body, _ := ioutil.ReadAll(r.Body)
+	clipboardItem := clipboardItem{}
+	err := json.Unmarshal(body, &clipboardItem)
+	if err != nil {
+		Log("error", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	h.clipboardItems = append(h.clipboardItems, clipboardItem)
+	json.NewEncoder(w).Encode(h.clipboardItems)
+}
+
+func (h *handler) getClipboardItems(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(h.clipboardItems)
 }
 
 func getOutboundIP() string {

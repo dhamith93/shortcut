@@ -36,7 +36,7 @@ func cleanUp() {
 	}
 }
 
-func HandleFile(file multipart.File, device string, fileName string) ([]FileList, error) {
+func handleFile(file multipart.File, device string, fileName string) ([]FileList, error) {
 	os.Mkdir("./public/files/"+device, 0775)
 	f, err := os.OpenFile("./public/files/"+device+"/"+fileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {

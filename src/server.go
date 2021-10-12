@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -78,9 +79,19 @@ func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 	device := r.Form.Get("device-name")
 	fileName := header.Filename
 
-	h.fileList, err = HandleFile(file, device, fileName)
+	if !validFileName(device) || !validFileName(fileName) {
+		Log("error", "invalid filename "+device+", "+fileName)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalid filename " + device + ", " + fileName)
+		return
+	}
+
+	h.fileList, err = handleFile(file, device, fileName)
 	if err != nil {
 		Log("error", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err.Error())
+		return
 	}
 	h.getFiles(w, r)
 }
@@ -129,4 +140,8 @@ func openBrowser(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
+}
+
+func validFileName(fileName string) bool {
+	return !strings.Contains(fileName, "..") && !strings.Contains(fileName, "\\") && !strings.Contains(fileName, "/")
 }

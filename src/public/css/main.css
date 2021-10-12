@@ -36,3 +36,20 @@ tbody td.start {
 tbody th.end {
 	padding-left: 26px;
 }
+
+.copyMessage {
+    font-size: 14px;
+    -webkit-transition: all .2s ease-in;
+    transition: all .2s ease-in;
+    opacity: 0;
+    margin: 10px;
+    vertical-align: super;
+}
+
+.modal-content-custom {
+    margin: 24px;
+}
+
+#clipboard-add-btn i {
+    margin-left: 0;
+}

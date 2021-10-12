@@ -38,10 +38,34 @@
             </table>
         </div>
         
+        <div class="fixed-action-btn">
+            <a id="clipboard-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#modal1">
+              <i class="large material-icons">content_paste</i>
+            </a>            
+        </div>
+
+        <div id="modal1" class="modal bottom-sheet">
+            <div class="modal-content-custom">
+                <div class="row">
+                    <div class="input-field col s11">
+                        <textarea id="clipboard-content" class="materialize-textarea"></textarea>
+                        <label for="clipboard-content">Clipboard content</label>
+                    </div>
+                    <div class="col s1">
+                        <button id="clipboard-add-btn" class="btn waves-effect waves-light">
+                            <i class="material-icons right">send</i>
+                        </button>
+                    </div>
+                </div>
+                <ul id="clipboard-collection" class="collection"></ul>
+            </div>
+        </div>
+
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
     <script src="/scripts/util.js"></script>
     <script src="/scripts/main.js"></script>
 </body>

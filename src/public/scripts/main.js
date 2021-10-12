@@ -3,9 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const hostIpSpan = document.getElementById('host-ip');
     const filePickerBtn = document.getElementById('file-picker-btn');
     const refreshBtn = document.getElementById('refresh-btn');
+    const clipboardCollection = document.getElementById('clipboard-collection');
+    const clipboardSendBtn = document.getElementById('clipboard-add-btn');
+    const clipboardContent = document.getElementById('clipboard-content');
     const deviceName = window.prompt('Please enter an unique device name', '');
     const fileTable = document.getElementById('file-table');
     const prevents = (e) => e.preventDefault();
+    const modals = document.querySelectorAll('.modal');
+    M.Modal.init(modals, null);
+    const clipboard = new ClipboardJS('.copy');
 
     if (deviceName && deviceName.length > 0) {
         document.getElementById('self-device-name').innerHTML = deviceName;
@@ -26,7 +32,28 @@ document.addEventListener('DOMContentLoaded', () => {
         input.click();
     });
 
-    refreshBtn.addEventListener('click', e => getFileList());
+    refreshBtn.addEventListener('click', e => {
+        getFileList();
+        getClipboardItems();
+    });
+
+    clipboardSendBtn.addEventListener('click', e => {
+        const content = clipboardContent.value;
+        const data = {
+            'DeviceName': deviceName,
+            'Content': content
+        };
+        
+        axios.post('clipboard', data).then((response) => {
+            if (response.data) {
+                processClipboardItems(response.data);
+            }
+            clipboardContent.value = '';
+        }, (error) => {
+            console.error(error);
+            alert('Error uploading the file... ' + error);
+        }); 
+    });
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
         mainArea.addEventListener(evt, prevents);
@@ -47,6 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
     mainArea.addEventListener('drop', e => {
         const files = e.dataTransfer.files;
         processFiles([...files]);
+    });
+
+    clipboard.on('success', function(e) {
+        const span = document.getElementById(e.trigger.dataset.copiedLabel);
+        if (span) {
+            span.style.opacity = 1;
+            setTimeout(() => {
+                span.style.opacity = 0;
+            }, 1500);
+            e.clearSelection();
+        }
     });
 
     function processFiles(files) {
@@ -87,6 +125,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getClipboardItems() {
+        axios.get('clipboard').then((response) => {
+            if (response.data) {
+                processClipboardItems(response.data);
+            }
+        }, (error) => {
+            console.error(error);
+        });
+    }
+
+    function processClipboardItems(data) {
+        clearElement(clipboardCollection).then(() => {
+            data.reverse();
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
+                clipboardCollection.innerHTML += buildCollectionItem(i, item.DeviceName, item.Content);
+            }
+        })
+    }
+
     function getMeta() {
         axios.get('meta').then((response) => {
             if (response.data) {
@@ -98,5 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     getMeta();
-    getFileList();    
+    getFileList();
+    getClipboardItems();  
 });

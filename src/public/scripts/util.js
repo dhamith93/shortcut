@@ -25,6 +25,20 @@ function populateTable(table, data) {
     }
 }
 
+function buildCollectionItem(index, deviceName, content) {
+    const template = `<li class="collection-item avatar">
+    <i class="material-icons circle">devices</i>
+    <span class="title">_device_name_</span>
+    <p id="content-_index_">_content_</p>
+    <a href="#!" data-copied-label="copied-_index_" class="secondary-content copy" data-clipboard-target="#content-_index_">
+        <span id="copied-_index_" class="copyMessage" style="opacity: 0;">Copied!</span>
+        <i class="material-icons">content_copy</i>
+    </a>
+</li>`;
+    content = content.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    return template.replaceAll('_index_', index).replace('_device_name_', deviceName).replace('_content_', content);
+}
+
 let convertTo = (amount, unit, outUnit) => {
     let out = null;
     switch (unit) {

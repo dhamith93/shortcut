@@ -1,4 +1,4 @@
-package fileops
+package main
 
 import (
 	"io"
@@ -7,8 +7,6 @@ import (
 	"mime/multipart"
 	"os"
 	"strings"
-
-	"github.com/dhamith93/shortcut/internal/logger"
 )
 
 type File struct {
@@ -21,9 +19,8 @@ type FileList struct {
 	Files  []File
 }
 
-// CleanUp removes all files in private/files dir
-func CleanUp() {
-	logger.Log("info", "cleaning up...")
+func cleanUp() {
+	Log("info", "cleaning up...")
 	path := "./public/files/"
 	files := fileList(path)
 
@@ -31,10 +28,10 @@ func CleanUp() {
 		if f.Name() == ".empty" {
 			continue
 		}
-		logger.Log("info", "removing "+path+f.Name())
+		Log("info", "removing "+path+f.Name())
 		err := os.RemoveAll(path + f.Name())
 		if err != nil {
-			logger.Fatal(err.Error())
+			Fatal(err.Error())
 		}
 	}
 }
@@ -43,15 +40,14 @@ func HandleFile(file multipart.File, device string, fileName string) ([]FileList
 	os.Mkdir("./public/files/"+device, 0775)
 	f, err := os.OpenFile("./public/files/"+device+"/"+fileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		return GetFileList(), err
+		return getFileList(), err
 	}
 	defer f.Close()
 	_, err = io.Copy(f, file)
-	return GetFileList(), err
+	return getFileList(), err
 }
 
-// GetFileList returns an array of FileList structs with files in private/files dir
-func GetFileList() []FileList {
+func getFileList() []FileList {
 	path := "./public/files/"
 	files := fileList(path)
 
@@ -78,8 +74,7 @@ func GetFileList() []FileList {
 	return out
 }
 
-// ReadFile read from given file
-func ReadFile(path string, defaultStr string) string {
+func readFile(path string, defaultStr string) string {
 	s, err := ioutil.ReadFile(path)
 	if err != nil {
 		return defaultStr
@@ -90,7 +85,7 @@ func ReadFile(path string, defaultStr string) string {
 func fileList(path string) []fs.FileInfo {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		logger.Fatal(err.Error())
+		Fatal(err.Error())
 	}
 	return files
 }

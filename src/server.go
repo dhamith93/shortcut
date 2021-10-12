@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"bytes"
@@ -10,22 +10,20 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/dhamith93/shortcut/internal/fileops"
-	"github.com/dhamith93/shortcut/internal/logger"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
-type Meta struct {
+type meta struct {
 	Url string
 }
 
-type Handler struct {
+type handler struct {
 	server   http.Server
-	fileList []fileops.FileList
+	fileList []FileList
 }
 
-func (h *Handler) handleRequests(port string) {
+func (h *handler) handleRequests(port string) {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/meta", h.sendMeta)
 	router.Path("/upload").Methods("POST").HandlerFunc(h.handleFile)
@@ -36,29 +34,29 @@ func (h *Handler) handleRequests(port string) {
 	h.server.Handler = handlers.CompressHandler(router)
 	h.server.SetKeepAlivesEnabled(false)
 
-	logger.Log("info", "Shortcut started on http://"+getOutboundIP()+port)
+	Log("info", "Shortcut started on http://"+getOutboundIP()+port)
 	go openBrowser("http://" + getOutboundIP() + port)
 	log.Fatal(h.server.ListenAndServe())
 }
 
-func (h *Handler) shutdown(ctx context.Context) error {
+func (h *handler) shutdown(ctx context.Context) error {
 	return h.server.Shutdown(ctx)
 }
 
-func (h *Handler) sendMeta(w http.ResponseWriter, r *http.Request) {
+func (h *handler) sendMeta(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	meta := Meta{
+
+	json.NewEncoder(w).Encode(&meta{
 		Url: "http://" + getOutboundIP() + h.server.Addr,
-	}
-	json.NewEncoder(w).Encode(&meta)
+	})
 }
 
-func (h *Handler) getFiles(w http.ResponseWriter, r *http.Request) {
+func (h *handler) getFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(&h.fileList)
 }
 
-func (h *Handler) handleFile(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
 	var buf bytes.Buffer
 	defer buf.Reset()
@@ -71,29 +69,11 @@ func (h *Handler) handleFile(w http.ResponseWriter, r *http.Request) {
 	device := r.Form.Get("device-name")
 	fileName := header.Filename
 
-	h.fileList, err = fileops.HandleFile(file, device, fileName)
+	h.fileList, err = HandleFile(file, device, fileName)
 	if err != nil {
-		logger.Log("error", err.Error())
+		Log("error", err.Error())
 	}
 	h.getFiles(w, r)
-}
-
-// Run starts the server in given port
-func Run(handler Handler) {
-	fileops.CleanUp()
-	port := fileops.ReadFile("port.txt", ":5500")
-	handler.fileList = fileops.GetFileList()
-	handler.handleRequests(port)
-}
-
-// Shutdown stops the server after cleaning up the files
-func Shutdown(handler Handler, ctx context.Context) {
-	fileops.CleanUp()
-	err := handler.shutdown(ctx)
-	if err != nil {
-		logger.Log("error", err.Error())
-	}
-	logger.Log("info", "Shortcut stopped")
 }
 
 func getOutboundIP() string {

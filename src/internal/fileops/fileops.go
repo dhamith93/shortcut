@@ -1,11 +1,9 @@
 package fileops
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"os"
 	"strings"
@@ -25,7 +23,7 @@ type FileList struct {
 
 // CleanUp removes all files in private/files dir
 func CleanUp() {
-	fmt.Println("Cleaning up...")
+	logger.Log("info", "cleaning up...")
 	path := "./public/files/"
 	files := fileList(path)
 
@@ -36,7 +34,7 @@ func CleanUp() {
 		logger.Log("info", "removing "+path+f.Name())
 		err := os.RemoveAll(path + f.Name())
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err.Error())
 		}
 	}
 }
@@ -92,7 +90,7 @@ func ReadFile(path string, defaultStr string) string {
 func fileList(path string) []fs.FileInfo {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 	return files
 }

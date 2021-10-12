@@ -1,6 +1,6 @@
 # Shortcut
 
-Simple way to share files within a local network. 
+Simple way to share **files** and **clipboard** with devices within a local network. 
 
 ## Usage
 

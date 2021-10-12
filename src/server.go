@@ -82,7 +82,7 @@ func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 	if !validFileName(device) || !validFileName(fileName) {
 		Log("error", "invalid filename "+device+", "+fileName)
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalid filename " + device + ", " + fileName)
+		json.NewEncoder(w).Encode("invalid file name and/or device name")
 		return
 	}
 

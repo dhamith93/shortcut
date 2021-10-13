@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"html"
 	"io/ioutil"
 	"log"
 	"net"
@@ -105,6 +106,7 @@ func (h *handler) handleClipboardItem(w http.ResponseWriter, r *http.Request) {
 		Log("error", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 	}
+	clipboardItem.Content = html.EscapeString(clipboardItem.Content)
 	h.clipboardItems = append(h.clipboardItems, clipboardItem)
 	json.NewEncoder(w).Encode(h.clipboardItems)
 }

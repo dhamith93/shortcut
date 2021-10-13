@@ -11,7 +11,6 @@ build:
 	GOOS=windows GOARCH=amd64 go build -o ../dist/shortcut-windows-amd64/shortcut-windows-amd64.exe . && \
 	GOOS=darwin GOARCH=amd64 go build -o ../dist/shortcut-darwin-amd64/shortcut-darwin-amd64 . && \
 	GOOS=darwin GOARCH=arm64 go build -o ../dist/shortcut-darwin-arm64/shortcut-darwin-arm64 .
-	cd ../
 	cp -r src/public dist/shortcut-linux-amd64
 	cp -r src/public dist/shortcut-windows-amd64
 	cp -r src/public dist/shortcut-darwin-amd64

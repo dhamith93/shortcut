@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
 type meta struct {
@@ -26,8 +27,16 @@ type clipboardItem struct {
 	Content    string
 }
 
+type message struct {
+	MsgType string
+	Msg     interface{}
+}
+
 type handler struct {
 	server         http.Server
+	upgrader       websocket.Upgrader
+	conn           *websocket.Conn
+	hub            *hub
 	fileList       []FileList
 	clipboardItems []clipboardItem
 }
@@ -35,6 +44,9 @@ type handler struct {
 func (h *handler) handleRequests(port string) {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/meta", h.sendMeta)
+	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		h.handleWS(h.hub, w, r)
+	})
 	router.Path("/upload").Methods("POST").HandlerFunc(h.handleFile)
 	router.Path("/clipboard").Methods("POST").HandlerFunc(h.handleClipboardItem)
 	router.Path("/clipboard").Methods("GET").HandlerFunc(h.getClipboardItems)
@@ -94,6 +106,8 @@ func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
+
+	go h.sendUpdate(message{"fileList", h.fileList})
 	h.getFiles(w, r)
 }
 
@@ -108,6 +122,8 @@ func (h *handler) handleClipboardItem(w http.ResponseWriter, r *http.Request) {
 	}
 	clipboardItem.Content = html.EscapeString(clipboardItem.Content)
 	h.clipboardItems = append(h.clipboardItems, clipboardItem)
+
+	go h.sendUpdate(message{"clipboardItems", h.clipboardItems})
 	json.NewEncoder(w).Encode(h.clipboardItems)
 }
 
@@ -115,6 +131,35 @@ func (h *handler) getClipboardItems(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(h.clipboardItems)
+}
+
+func (h *handler) handleWS(hub *hub, w http.ResponseWriter, r *http.Request) {
+	var err error
+	h.upgrader = websocket.Upgrader{}
+	h.conn, err = h.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
+	}
+
+	client := &client{hub: hub, conn: h.conn, send: make(chan []byte, 256)}
+	client.hub.register <- client
+
+	go client.writePump()
+	data, _ := json.Marshal([]message{{"fileList", h.fileList}, {"clipboardItems", h.clipboardItems}})
+	client.send <- data
+}
+
+func (h *handler) sendUpdate(v ...interface{}) {
+	data, _ := json.Marshal(v)
+
+	for c := range h.hub.clients {
+		select {
+		case c.send <- data:
+		default:
+			delete(h.hub.clients, c)
+			close(c.send)
+		}
+	}
 }
 
 func getOutboundIP() string {

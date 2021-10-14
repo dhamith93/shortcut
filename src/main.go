@@ -36,6 +36,8 @@ func start(handler handler) {
 	port := readFile("port.txt", ":5500")
 	handler.fileList = getFileList()
 	handler.clipboardItems = []clipboardItem{}
+	handler.hub = newHub()
+	go handler.hub.run()
 	handler.handleRequests(port)
 }
 

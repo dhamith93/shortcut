@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainArea = document.getElementById('main-area');
     const hostIpSpan = document.getElementById('host-ip');
     const filePickerBtn = document.getElementById('file-picker-btn');
-    const refreshBtn = document.getElementById('refresh-btn');
     const clipboardCollection = document.getElementById('clipboard-collection');
     const clipboardSendBtn = document.getElementById('clipboard-add-btn');
     const clipboardContent = document.getElementById('clipboard-content');
@@ -12,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modals = document.querySelectorAll('.modal');
     M.Modal.init(modals, null);
     const clipboard = new ClipboardJS('.copy');
+    let socket;
 
     if (deviceName && deviceName.length > 0) {
         document.getElementById('self-device-name').innerHTML = deviceName;
@@ -23,18 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.setAttribute('multiple', 'true');
-
         input.onchange = e => { 
             const files = e.target.files; 
             processFiles([...files]);
         }
-
         input.click();
-    });
-
-    refreshBtn.addEventListener('click', e => {
-        getFileList();
-        getClipboardItems();
     });
 
     clipboardSendBtn.addEventListener('click', e => {
@@ -44,10 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'Content': content
         };
         
-        axios.post('clipboard', data).then((response) => {
-            if (response.data) {
-                processClipboardItems(response.data);
-            }
+        axios.post('clipboard', data).then((r) => {
             clipboardContent.value = '';
         }, (error) => {
             console.error(error);
@@ -102,11 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('progress-completed').style.width =  percentCompleted + '%';
                 }
             };
-            axios.post('upload', formData, config).then((response) => {
-                if (response.data) {
-                    populateTable(fileTable, response.data);
-                }
-            }, (error) => {
+            axios.post('upload', formData, config).then((r) => {}, (error) => {
                 console.error(error);
                 alert('Error uploading the file... ' + error);
             }).finally(() => {
@@ -120,9 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.data) {
                 populateTable(fileTable, response.data);
             }
-        }, (error) => {
-            console.error(error);
-        });
+        }, (error) => console.error(error));
     }
 
     function getClipboardItems() {
@@ -130,9 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.data) {
                 processClipboardItems(response.data);
             }
-        }, (error) => {
-            console.error(error);
-        });
+        }, (error) => console.error(error));
     }
 
     function processClipboardItems(data) {
@@ -149,6 +131,28 @@ document.addEventListener('DOMContentLoaded', () => {
         axios.get('meta').then((response) => {
             if (response.data) {
                 hostIpSpan.innerHTML = response.data.Url;
+                socket = new WebSocket('ws://' + response.data.Url.replace('http://', '') + '/ws');
+                socket.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        data.forEach(item => {
+                            switch (item.MsgType) {
+                                case 'clipboardItems':
+                                    processClipboardItems(item.Msg);
+                                    break;
+                                case 'fileList':
+                                    populateTable(fileTable, item.Msg);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        });
+                    } catch (e) {
+                        // fall back to API if parsing JSON failed
+                        getClipboardItems();
+                        getFileList();
+                    }
+                }
             }
         }, (error) => {
             console.error(error);
@@ -156,6 +160,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     getMeta();
-    getFileList();
-    getClipboardItems();  
 });

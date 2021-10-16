@@ -11,3 +11,12 @@ Default port is `:5500`, but it can be changed by editing the `config.json` file
 Files can be dragged and dropped / uploaded from the browser and can be uploaded/downloaded by anyone visiting the URL from the same network from any device. 
 
 Device that runs the executable act as a centralized server, and the files will be uploaded to the `public/files/` dir in executable path. These files will be removed once the executable is stopped running or the next time it is running if executable crashed/force closed.
+
+### Available configuration through config.json
+```
+Port: string (:port),
+MaxClipboardItemCount: int,
+MaxFileSize: string (xMB),
+MaxDeviceCount: int,
+PreserveClipboardOnExit: bool
+```

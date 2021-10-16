@@ -148,6 +148,11 @@ func (h *handler) handleClipboardItem(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	clipboardItem.Content = html.EscapeString(clipboardItem.Content)
+
+	if len(h.clipboardItems) >= h.config.MaxClipboardItemCount && len(h.clipboardItems) > 0 {
+		h.clipboardItems = h.clipboardItems[1:]
+	}
+
 	h.clipboardItems = append(h.clipboardItems, clipboardItem)
 
 	go h.sendUpdate(message{"clipboardItems", h.clipboardItems})

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/handlers"
@@ -19,7 +20,8 @@ import (
 )
 
 type meta struct {
-	Url string
+	Url         string
+	MaxFileSize string
 }
 
 type clipboardItem struct {
@@ -85,7 +87,8 @@ func (h *handler) sendMeta(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	json.NewEncoder(w).Encode(&meta{
-		Url: "http://" + getOutboundIP() + h.server.Addr,
+		Url:         "http://" + getOutboundIP() + h.server.Addr,
+		MaxFileSize: h.config.MaxFileSize,
 	})
 }
 
@@ -107,10 +110,12 @@ func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 	device := r.Form.Get("device-name")
 	fileName := header.Filename
 
-	if !validFileName(device) || !validFileName(fileName) {
-		Log("error", "invalid filename "+device+", "+fileName)
+	msg, valid := h.validateFile(fileName, device, header.Size)
+
+	if !valid {
+		Log("error", msg)
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalid file name and/or device name")
+		json.NewEncoder(w).Encode(msg)
 		return
 	}
 
@@ -182,6 +187,24 @@ func (h *handler) sendUpdate(v ...interface{}) {
 			close(c.send)
 		}
 	}
+}
+
+func (h *handler) validateFile(fileName string, deviceName string, size int64) (string, bool) {
+	if !validFileName(deviceName) || !validFileName(fileName) {
+		return "invalid file name and/or device name " + deviceName + " > " + fileName, false
+	}
+
+	allowedSize, err := strconv.Atoi(strings.TrimSpace(strings.ReplaceAll(h.config.MaxFileSize, "MB", "")))
+	if err != nil {
+		log.Fatal(err)
+	}
+	allowedSize = allowedSize * 1024 * 1024
+
+	if size > int64(allowedSize) {
+		return "file size exceed max allowed size " + strconv.FormatInt(size, 10) + " > " + strconv.Itoa(allowedSize), false
+	}
+
+	return "", true
 }
 
 func getOutboundIP() string {

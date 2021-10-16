@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modals = document.querySelectorAll('.modal');
     M.Modal.init(modals, null);
     const clipboard = new ClipboardJS('.copy');
+    let maxFileSize;
     let socket;
 
     if (deviceName && deviceName.length > 0) {
@@ -79,6 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function processFiles(files) {
         files.forEach(file => {
+            if (file.size > convertTo(maxFileSize.replace('MB', '').trim(), 'M', 'B')) {
+                alert('File size of ' + file.name + ' exceed allowed size ' + maxFileSize);
+                return;
+            }
             const formData = new FormData();            
             formData.append('file', file);
             formData.append('device-name', deviceName);
@@ -131,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         axios.get('meta').then((response) => {
             if (response.data) {
                 hostIpSpan.innerHTML = response.data.Url;
+                maxFileSize = response.data.MaxFileSize;
                 socket = new WebSocket('ws://' + response.data.Url.replace('http://', '') + '/ws');
                 socket.addEventListener('error', e => {
                     alert('Connection rejected');

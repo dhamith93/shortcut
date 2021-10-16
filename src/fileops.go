@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"os"
+	"strings"
+	"time"
 )
 
 type File struct {
@@ -79,4 +81,12 @@ func fileList(path string) []fs.FileInfo {
 		Fatal(err.Error())
 	}
 	return files
+}
+
+func writeClipboardToFile(contents []byte) {
+	path := "clipboard_" + strings.ReplaceAll(time.Now().Format("2006-01-02 15:04:05"), " ", "_") + ".json"
+	err := ioutil.WriteFile(path, contents, 0644)
+	if err != nil {
+		Log("error", err.Error())
+	}
 }

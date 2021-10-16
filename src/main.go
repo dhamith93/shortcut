@@ -23,15 +23,15 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		<-ch
-		shutdown(handler, ctx)
+		shutdown(&handler, ctx)
 		signal.Reset(syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 		cancel()
 		os.Exit(0)
 	}()
-	start(handler)
+	start(&handler)
 }
 
-func start(handler handler) {
+func start(handler *handler) {
 	cleanUp()
 	handler.config = loadConfig("config.json")
 	handler.fileList = getFileList()
@@ -41,7 +41,7 @@ func start(handler handler) {
 	handler.handleRequests()
 }
 
-func shutdown(handler handler, ctx context.Context) {
+func shutdown(handler *handler, ctx context.Context) {
 	cleanUp()
 	err := handler.shutdown(ctx)
 	if err != nil {

@@ -67,6 +67,13 @@ func (h *handler) handleRequests() {
 }
 
 func (h *handler) shutdown(ctx context.Context) error {
+	if h.config.PreserveClipboardOnExit {
+		clipboardBytes, err := json.Marshal(h.clipboardItems)
+		if err != nil {
+			Fatal(err.Error())
+		}
+		writeClipboardToFile(clipboardBytes)
+	}
 	return h.server.Shutdown(ctx)
 }
 
@@ -103,7 +110,7 @@ func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 	defer buf.Reset()
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		panic(err)
+		Fatal(err.Error())
 	}
 	defer file.Close()
 	defer r.MultipartForm.RemoveAll()
@@ -115,7 +122,7 @@ func (h *handler) handleFile(w http.ResponseWriter, r *http.Request) {
 	if !valid {
 		Log("error", msg)
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(msg)
+		json.NewEncoder(w).Encode(html.EscapeString(msg))
 		return
 	}
 

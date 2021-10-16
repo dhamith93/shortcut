@@ -15,10 +15,10 @@ build:
 	cp -r src/public dist/shortcut-windows-amd64
 	cp -r src/public dist/shortcut-darwin-amd64
 	cp -r src/public dist/shortcut-darwin-arm64
-	cp -r src/port.txt dist/shortcut-linux-amd64
-	cp -r src/port.txt dist/shortcut-windows-amd64
-	cp -r src/port.txt dist/shortcut-darwin-amd64
-	cp -r src/port.txt dist/shortcut-darwin-arm64
+	cp -r src/config.json dist/shortcut-linux-amd64
+	cp -r src/config.json dist/shortcut-windows-amd64
+	cp -r src/config.json dist/shortcut-darwin-amd64
+	cp -r src/config.json dist/shortcut-darwin-arm64
 	zip -r dist/shortcut-linux-amd64.zip dist/shortcut-linux-amd64 
 	zip -r dist/shortcut-windows-amd64.zip dist/shortcut-windows-amd64
 	zip -r dist/shortcut-darwin-amd64.zip dist/shortcut-darwin-amd64

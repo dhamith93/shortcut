@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clipboardContent.value = '';
         }, (error) => {
             console.error(error);
-            alert('Error uploading the file... ' + error);
+            alert('Error adding the clipboard item... ' + error);
         }); 
     });
 
@@ -132,7 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.data) {
                 hostIpSpan.innerHTML = response.data.Url;
                 socket = new WebSocket('ws://' + response.data.Url.replace('http://', '') + '/ws');
-                socket.onmessage = (e) => {
+                socket.addEventListener('error', e => {
+                    alert('Connection rejected');
+                    document.getElementsByTagName('body')[0].style.display = 'none';
+                });
+                socket.addEventListener('message', e => {
                     try {
                         const data = JSON.parse(e.data);
                         data.forEach(item => {
@@ -152,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         getClipboardItems();
                         getFileList();
                     }
-                }
+                });
             }
         }, (error) => {
             console.error(error);

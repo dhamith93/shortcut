@@ -38,20 +38,21 @@ type handler struct {
 	conn           *websocket.Conn
 	hub            *hub
 	config         config
+	connectedIPs   []string
 	fileList       []FileList
 	clipboardItems []clipboardItem
 }
 
 func (h *handler) handleRequests() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/meta", h.sendMeta)
+	router.Path("/meta").Methods("GET").HandlerFunc(h.sendMeta)
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		h.handleWS(h.hub, w, r)
 	})
-	router.Path("/upload").Methods("POST").HandlerFunc(h.handleFile)
-	router.Path("/clipboard").Methods("POST").HandlerFunc(h.handleClipboardItem)
-	router.Path("/clipboard").Methods("GET").HandlerFunc(h.getClipboardItems)
-	router.HandleFunc("/files", h.getFiles)
+	router.Path("/upload").Methods("POST").Handler(h.checkRequest(h.handleFile))
+	router.Path("/clipboard").Methods("POST").Handler(h.checkRequest(h.handleClipboardItem))
+	router.Path("/clipboard").Methods("GET").Handler(h.checkRequest(h.getClipboardItems))
+	router.Path("/files").Methods("GET").Handler(h.checkRequest(h.getFiles))
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 
 	h.server.Addr = h.config.Port
@@ -65,6 +66,19 @@ func (h *handler) handleRequests() {
 
 func (h *handler) shutdown(ctx context.Context) error {
 	return h.server.Shutdown(ctx)
+}
+
+func (h *handler) checkRequest(endpoint func(w http.ResponseWriter, r *http.Request)) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !contains(h.connectedIPs, strings.Split(r.RemoteAddr, ":")[0]) {
+			Log("info", "Bad request - device count exceeded - "+r.RemoteAddr)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode("BadRequest")
+			return
+		}
+
+		endpoint(w, r)
+	})
 }
 
 func (h *handler) sendMeta(w http.ResponseWriter, r *http.Request) {
@@ -135,6 +149,12 @@ func (h *handler) getClipboardItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) handleWS(hub *hub, w http.ResponseWriter, r *http.Request) {
+	if len(h.hub.clients) >= h.config.MaxDeviceCount {
+		Log("info", "Allowed device count exceeded - rejected: "+r.RemoteAddr)
+		http.Error(w, "Allowed device count exceeded", http.StatusForbidden)
+		return
+	}
+
 	var err error
 	h.upgrader = websocket.Upgrader{}
 	h.conn, err = h.upgrader.Upgrade(w, r, nil)
@@ -144,6 +164,7 @@ func (h *handler) handleWS(hub *hub, w http.ResponseWriter, r *http.Request) {
 
 	client := &client{hub: hub, conn: h.conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
+	h.connectedIPs = append(h.connectedIPs, strings.Split(r.RemoteAddr, ":")[0])
 
 	go client.writePump()
 	data, _ := json.Marshal([]message{{"fileList", h.fileList}, {"clipboardItems", h.clipboardItems}})
@@ -192,4 +213,13 @@ func openBrowser(url string) error {
 
 func validFileName(fileName string) bool {
 	return !strings.Contains(fileName, "..") && !strings.Contains(fileName, "\\") && !strings.Contains(fileName, "/")
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }

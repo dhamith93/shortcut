@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"os"
-	"strings"
 )
 
 type File struct {
@@ -72,14 +71,6 @@ func getFileList() []FileList {
 	}
 
 	return out
-}
-
-func readFile(path string, defaultStr string) string {
-	s, err := ioutil.ReadFile(path)
-	if err != nil {
-		return defaultStr
-	}
-	return strings.TrimSpace(string(s))
 }
 
 func fileList(path string) []fs.FileInfo {

@@ -6,7 +6,7 @@ Simple way to share **files** and **clipboard** with devices within a local netw
 
 Run the ./shortcut executable. A browser window will be opened with the URL to connect from other devices. 
 
-Default port is `:5500`, but it can be changed by editing the `port.txt` file. Make sure to add the semicolon before the port when changing.
+Default port is `:5500`, but it can be changed by editing the `config.json` file. Make sure to add the semicolon before the port when changing.
 
 Files can be dragged and dropped / uploaded from the browser and can be uploaded/downloaded by anyone visiting the URL from the same network from any device. 
 

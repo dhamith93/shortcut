@@ -33,12 +33,12 @@ func main() {
 
 func start(handler handler) {
 	cleanUp()
-	port := readFile("port.txt", ":5500")
+	handler.config = loadConfig("config.json")
 	handler.fileList = getFileList()
 	handler.clipboardItems = []clipboardItem{}
 	handler.hub = newHub()
 	go handler.hub.run()
-	handler.handleRequests(port)
+	handler.handleRequests()
 }
 
 func shutdown(handler handler, ctx context.Context) {

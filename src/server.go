@@ -37,11 +37,12 @@ type handler struct {
 	upgrader       websocket.Upgrader
 	conn           *websocket.Conn
 	hub            *hub
+	config         config
 	fileList       []FileList
 	clipboardItems []clipboardItem
 }
 
-func (h *handler) handleRequests(port string) {
+func (h *handler) handleRequests() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/meta", h.sendMeta)
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -53,12 +54,12 @@ func (h *handler) handleRequests(port string) {
 	router.HandleFunc("/files", h.getFiles)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 
-	h.server.Addr = port
+	h.server.Addr = h.config.Port
 	h.server.Handler = handlers.CompressHandler(router)
 	h.server.SetKeepAlivesEnabled(false)
 
-	Log("info", "Shortcut started on http://"+getOutboundIP()+port)
-	go openBrowser("http://" + getOutboundIP() + port)
+	Log("info", "Shortcut started on http://"+getOutboundIP()+h.config.Port)
+	go openBrowser("http://" + getOutboundIP() + h.config.Port)
 	log.Fatal(h.server.ListenAndServe())
 }
 

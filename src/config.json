@@ -1,0 +1,7 @@
+{
+    "Port": ":5500",
+    "MaxClipboardItemCount": 10,
+    "MaxFileSize": "500MB",
+    "MaxDeviceCount": 10,
+    "PreserveClipboardOnExit": true
+}

@@ -84,7 +84,8 @@ func fileList(path string) []fs.FileInfo {
 }
 
 func writeClipboardToFile(contents []byte) {
-	path := "clipboard_" + strings.ReplaceAll(time.Now().Format("2006-01-02 15:04:05"), " ", "_") + ".json"
+	dateStr := strings.ReplaceAll(strings.ReplaceAll(time.Now().Format("2006-01-02 15:04:05"), " ", "_"), ":", "")
+	path := "clipboard_" + dateStr + ".json"
 	err := ioutil.WriteFile(path, contents, 0644)
 	if err != nil {
 		Log("error", err.Error())

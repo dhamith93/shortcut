@@ -7,12 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const clipboardContent = document.getElementById('clipboard-content');
     const deviceName = window.prompt('Please enter an unique device name', '');
     const fileTable = document.getElementById('file-table');
+    const toggleIcon = document.getElementById('toggle-icon');
     const prevents = (e) => e.preventDefault();
     const modals = document.querySelectorAll('.modal');
     M.Modal.init(modals, null);
     const clipboard = new ClipboardJS('.copy');
     let maxFileSize;
     let socket;
+    let mode = 'dark';
 
     if (deviceName && deviceName.length > 0) {
         document.getElementById('self-device-name').innerHTML = deviceName;
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ['dragleave', 'drop'].forEach(evt => {
         mainArea.addEventListener(evt, e => {
-            mainArea.style.backgroundColor = '#FFFFFF';
+            mainArea.style.backgroundColor = 'unset';
         });
     });
 
@@ -75,6 +77,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 span.style.opacity = 0;
             }, 1500);
             e.clearSelection();
+        }
+    });
+
+    if ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) || mode === 'dark') {
+        mode = 'dark';
+        changeMode('dark');
+        if(toggleIcon.textContent === 'brightness_high') {
+            toggleIcon.textContent = 'brightness_4';
+        }
+    }
+
+    document.getElementById('mode-toggle').addEventListener('click', e => {
+        if (mode === 'dark') {
+            mode = 'light';
+            document.querySelector('body').classList.remove('dark');
+        } else {
+            mode = 'dark';
+            document.querySelector('body').classList.add('dark')
+        }
+
+        if(toggleIcon.textContent === 'brightness_4') {
+            toggleIcon.textContent = 'brightness_high';
+        } else {
+            toggleIcon.textContent = 'brightness_4';
+        }
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        mode = e.matches ? 'dark' : 'light';
+        changeMode(mode);
+        if(mode === 'light') {
+            toggleIcon.textContent = 'brightness_high';
+        } else {
+            toggleIcon.textContent = 'brightness_4';
         }
     });
 
@@ -167,6 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }, (error) => {
             console.error(error);
         });
+    }
+
+    function changeMode(mode) {
+        if (mode === 'dark') {
+            document.querySelector('body').classList.add('dark'); 
+        } else {
+            document.querySelector('body').classList.remove('dark');
+        }
     }
 
     getMeta();
